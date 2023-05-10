@@ -15,13 +15,13 @@ Please read the readme from there to know how to use the program!
 
 - Build the program with ```cargo build```
 
-- Run the program, the ```days_rs``` is located in ```target/debug/days_rs```. For example ```./days.exe list```  will list all the events.
+- Run the program, the ```days_rs``` is located in ```src/``` folder. For example ```./days list```  will list all the events.
 
 ### On Windows:
 
 - Build the program with ```cargo build```
 
-- Run the program, the ```days_rs.exe``` is located in ```target/debug/days_rs.exe```. For example ```.\days.exe list```  will list all the events.
+- Run the program, the ```days_rs.exe``` is located in ```src/``` folder. For example ```.\days.exe list```  will list all the events.
 
 ---
 
