@@ -493,7 +493,7 @@ fn main() {
                             if args.len() > 4 && args[length] == arg_dry_run {
                                 println!(
                                     "{}: {} ({}) would have been deleted without dry-run",
-                                    event.date, event.category, event.description
+                                    event.date, event.description, event.category
                                 );
                             // Delete events for real if dry-run not given
                             } else {
@@ -513,7 +513,7 @@ fn main() {
                             if args.len() > 4 && args[length] == arg_dry_run {
                                 println!(
                                     "{}: {} ({}) would have been deleted without dry-run",
-                                    event.date, event.category, event.description
+                                    event.date, event.description, event.category
                                 );
                             // Delete events for real if dry-run not given
                             } else {
@@ -532,7 +532,7 @@ fn main() {
                         if args.len() > 4 && args[length] == arg_dry_run {
                             println!(
                                 "{}: {} ({}) would have been deleted without dry-run",
-                                event.date, event.category, event.description
+                                event.date, event.description, event.category
                             );
                         // Delete events for real if dry-run not given
                         } else {
@@ -551,7 +551,7 @@ fn main() {
                 for event in events_vector.iter() {
                     println!(
                         "{}: {} ({}) would have been deleted without dry-run",
-                        event.date, event.category, event.description
+                        event.date, event.description, event.category
                     );
                 }
             }
@@ -586,7 +586,7 @@ fn main() {
                     if args.len() > 5 && args[length] == arg_dry_run {
                         println!(
                             "{}: {} ({}) would have been deleted without dry-run",
-                            event.date, event.category, event.description
+                            event.date, event.description, event.category
                         );
                     // Delete events for real if dry-run not given
                     } else {
