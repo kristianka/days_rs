@@ -7,6 +7,8 @@ use std::io::Error;
 use std::path::PathBuf;
 use std::process;
 
+mod help_prints;
+
 #[derive(Debug)]
 struct Event {
     /// YYYY-MM-DD, like 2023-05-11
@@ -201,30 +203,6 @@ fn main() {
 
     // Counter for found events
     let mut counter = 0;
-
-    if args.len() == 1 {
-        println!("No arguments entered. Use --help for help.");
-        process::exit(0);
-    }
-
-    let arg_help = "--help";
-    if args[1] == arg_help {
-        println!("Help for the list command:");
-        println!("Usage: days [list] [options]");
-        println!("Options:");
-        println!("--today");
-        println!("--before-date <date>");
-        println!("--after-date <date>");
-        println!("--date <date>");
-        println!("--categories <category1,category2>");
-        println!("--exclude <category1,category2>");
-        println!("--no-category");
-        println!("--add <date> <category> <description>");
-        println!("--remove <date> <category> <description>");
-        println!("--help");
-        counter += 1;
-    }
-
     let mut events_path = PathBuf::new();
     let mut temp_path = PathBuf::new();
     let mut events_vector = Vec::new();
@@ -241,6 +219,7 @@ fn main() {
         }
     }
 
+    // Arguments to compare args to. For listing, adding and deleting events
     let arg_list = "list";
     let arg_today = "--today";
     let arg_before_date = "--before-date";
@@ -249,8 +228,37 @@ fn main() {
     let arg_categories = "--categories";
     let arg_exclude = "--exclude";
     let arg_no_category = "--no-category";
+    let arg_add = "add";
+    let arg_category = "--category";
+    let arg_description = "--description";
+    let mut category = "";
+    let mut description = "";
+    let arg_delete = "delete";
+    let arg_dry_run = "--dry-run";
+    let arg_all = "--all";
 
-    // let arg_add = "--add";
+    if args.len() == 1 {
+        println!("No arguments entered. Use --help for help.");
+        process::exit(0);
+    }
+
+    let arg_help = "--help";
+    if args[1] == arg_help {
+        counter += 1;
+        if args.len() > 2 {
+            if args[2] == arg_list {
+                help_prints::help_list();
+            }
+            if args[2] == arg_add {
+                help_prints::help_add();
+            }
+            if args[2] == arg_delete {
+                help_prints::help_delete();
+            }
+        } else {
+            println!("Available help commands are: list, add, delete. Example: 'days --help list'");
+        }
+    }
 
     // Arguments starting with list
     if args.len() > 1 && args[1] == arg_list {
@@ -368,12 +376,6 @@ fn main() {
         }
     }
 
-    let arg_add = "add";
-    let arg_category = "--category";
-    let arg_description = "--description";
-    let mut category = "";
-    let mut description = "";
-
     // Arguments starting with add
     if args.len() > 1 && args[1] == arg_add {
         let mut date_given: bool = true;
@@ -423,9 +425,6 @@ fn main() {
         }
     }
 
-    let arg_delete = "delete";
-    let arg_dry_run = "--dry-run";
-
     // Arguments starting with delete
     if args.len() > 1 && args[1] == arg_delete {
         if args.len() < 3 {
@@ -436,11 +435,17 @@ fn main() {
         let length = args.len() - 1;
 
         // If --description is given as first argument after delete
-        if args[2] == arg_description {
+        if args[2] == arg_description || args[2] == arg_category {
+            let is_description: bool = (args[2] == arg_description);
+
             for event in events_vector.iter() {
-                if event.description.starts_with(&args[3]) {
+                // Check if the given arguments matches, if user gave --description
+                // search for matching descriptions and ignore categories
+                if (is_description && event.description.starts_with(&args[3]))
+                    || (!is_description && event.category == args[3])
+                {
                     // Check for dry-run
-                    if args.len() > 4 && args[4] == arg_dry_run {
+                    if args.len() > 4 && args[length] == arg_dry_run {
                         println!(
                             "{}: {} ({}) would have been deleted without dry-run",
                             event.date, event.category, event.description
@@ -448,7 +453,145 @@ fn main() {
                     // Delete events for real if dry-run not given
                     } else {
                         let event_formatted = csv_format_to_event(&event);
-                        delete_an_event(&events_path, &temp_path, event_formatted, event);
+                        delete_an_event(&events_path, &temp_path, event_formatted, &event);
+                    }
+                    counter += 1;
+                }
+            }
+        }
+
+        // If --date is given as first argument after delete
+        if args.len() > 3 && args[2] == arg_date {
+            let date = NaiveDate::parse_from_str(&args[3], "%Y-%m-%d");
+
+            if date.is_err() {
+                eprintln!("Bad date given");
+                process::exit(1);
+            }
+
+            let has_category: bool = (args.len() > 5 && args[4] == arg_category);
+            let has_description: bool = (args.len() > 6 && args[4] == arg_description);
+
+            if has_category {
+                for i in 2..args.len() {
+                    if args[i] == arg_category {
+                        category = &args[i + 1];
+                    }
+                    if args[i] == arg_description {
+                        description = &args[i + 1];
+                    }
+                }
+            }
+
+            for event in events_vector.iter() {
+                // If category is given, find events with given date and category
+                if has_category {
+                    // If description is not given, find events with given date and category
+                    if !has_description {
+                        if event.date == date.unwrap() && event.category == category {
+                            // Check for dry-run
+                            if args.len() > 4 && args[length] == arg_dry_run {
+                                println!(
+                                    "{}: {} ({}) would have been deleted without dry-run",
+                                    event.date, event.category, event.description
+                                );
+                            // Delete events for real if dry-run not given
+                            } else {
+                                let event_formatted = csv_format_to_event(&event);
+                                delete_an_event(&events_path, &temp_path, event_formatted, &event);
+                            }
+                            counter += 1;
+                        }
+                    }
+                    // If description is given, find events with given date, category and description
+                    if has_description {
+                        if event.date == date.unwrap()
+                            && event.category == category
+                            && event.description.starts_with(description)
+                        {
+                            // Check for dry-run
+                            if args.len() > 4 && args[length] == arg_dry_run {
+                                println!(
+                                    "{}: {} ({}) would have been deleted without dry-run",
+                                    event.date, event.category, event.description
+                                );
+                            // Delete events for real if dry-run not given
+                            } else {
+                                let event_formatted = csv_format_to_event(&event);
+                                delete_an_event(&events_path, &temp_path, event_formatted, event);
+                            }
+                            counter += 1;
+                        }
+                    }
+                }
+
+                // If category is not given, find events just with given date
+                if !has_category {
+                    if event.date == date.unwrap() {
+                        // Check for dry-run
+                        if args.len() > 4 && args[length] == arg_dry_run {
+                            println!(
+                                "{}: {} ({}) would have been deleted without dry-run",
+                                event.date, event.category, event.description
+                            );
+                        // Delete events for real if dry-run not given
+                        } else {
+                            let event_formatted = csv_format_to_event(&event);
+                            delete_an_event(&events_path, &temp_path, event_formatted, &event);
+                        }
+                        counter += 1;
+                    }
+                }
+            }
+        }
+
+        if args[2] == arg_all {
+            // Check for dry-run
+            if args.len() > 3 && args[length] == arg_dry_run {
+                for event in events_vector.iter() {
+                    println!(
+                        "{}: {} ({}) would have been deleted without dry-run",
+                        event.date, event.category, event.description
+                    );
+                }
+            }
+            // Delete events for real if dry-run not given
+            if args.len() == 3 {
+                for event in events_vector.iter() {
+                    let event_formatted = csv_format_to_event(&event);
+                    // submits all lines and deletes them
+                    delete_an_event(&events_path, &temp_path, event_formatted, &event);
+                }
+            }
+            counter += 1;
+        }
+        let arg_between = "--between";
+        if args[2] == arg_between {
+            if args.len() != 5 && args.len() != 6 {
+                eprintln!("No dates given or wrong formatting.\n");
+                process::exit(1);
+            }
+
+            let date1 = NaiveDate::parse_from_str(&args[3], "%Y-%m-%d");
+            let date2 = NaiveDate::parse_from_str(&args[4], "%Y-%m-%d");
+
+            if date1.is_err() || date2.is_err() {
+                eprintln!("Bad date given");
+                process::exit(1);
+            }
+
+            for event in events_vector {
+                if event.date >= date1.unwrap() && event.date <= date2.unwrap() {
+                    // Check for dry-run
+                    if args.len() > 5 && args[length] == arg_dry_run {
+                        println!(
+                            "{}: {} ({}) would have been deleted without dry-run",
+                            event.date, event.category, event.description
+                        );
+                    // Delete events for real if dry-run not given
+                    } else {
+                        let event_formatted = csv_format_to_event(&event);
+                        delete_an_event(&events_path, &temp_path, event_formatted, &event);
                     }
                     counter += 1;
                 }
@@ -456,6 +599,7 @@ fn main() {
         }
     }
 
+    // If no events were printed, print this
     if counter == 0 {
         println!("No events found");
     }
