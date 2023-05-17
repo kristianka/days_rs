@@ -29,7 +29,6 @@ Please read the readme from there to know how to use the program!
 
 ```
 date,category,description
-date,category,description
 1985-12-31,computing,C++ released
 2010-01-01,sport,Go
 2014-11-12,computing,.NET Core released
