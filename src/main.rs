@@ -1,9 +1,7 @@
 use chrono::NaiveDate;
 use std::env;
 use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, BufWriter, Write};
-
-use std::io::Error;
+use std::io::{BufRead, BufReader, BufWriter, Error, Write};
 use std::path::PathBuf;
 use std::process;
 
@@ -17,6 +15,7 @@ struct Event {
     description: String,
 }
 
+// Create a new event
 impl Event {
     fn new(date: NaiveDate, category: String, description: String) -> Self {
         Self {
@@ -101,6 +100,7 @@ fn read_csv_file() -> Result<CsvData, Error> {
         .delimiter(b',')
         .from_reader(csv.as_bytes());
 
+    // Read the csv file
     for result in rdr.records() {
         let record = result?;
         let date_str = &record[0];
@@ -109,6 +109,7 @@ fn read_csv_file() -> Result<CsvData, Error> {
 
         let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d");
 
+        // Check if date is valid and push to events vector
         if let Ok(date) = date {
             events.push(Event {
                 date,
@@ -177,6 +178,8 @@ fn delete_an_event(
     }
 }
 
+/// Format string to be like line in events.csv
+/// YYYY-MM-DD,category,description
 fn csv_format_to_event(event: &Event) -> String {
     format!(
         "{},{},{}",
@@ -192,8 +195,8 @@ fn separate_args_to_vector(args: &String) -> Vec<String> {
     separated_args
 }
 
-// Surpressed unsused warnings
-#[allow(unused)]
+// Needed to surpress warnings for paths
+#[allow(unused_assignments)]
 fn main() {
     // Current time
     let now = chrono::Utc::now().naive_utc().date();
@@ -203,8 +206,10 @@ fn main() {
 
     // Counter for found events
     let mut counter = 0;
+    // Paths
     let mut events_path = PathBuf::new();
     let mut temp_path = PathBuf::new();
+    // Vector for events
     let mut events_vector = Vec::new();
 
     match read_csv_file() {
@@ -236,6 +241,7 @@ fn main() {
     let arg_delete = "delete";
     let arg_dry_run = "--dry-run";
     let arg_all = "--all";
+    let arg_between = "--between";
 
     if args.len() == 1 {
         println!("No arguments entered. Use --help for help.");
@@ -295,7 +301,7 @@ fn main() {
             let mut date1 = NaiveDate::parse_from_str(&args[3], "%Y-%m-%d");
             let mut date2 = NaiveDate::parse_from_str(&args[3], "%Y-%m-%d");
 
-            if (args[2] == arg_before_date) {
+            if args[2] == arg_before_date {
                 before = true;
             }
 
@@ -340,7 +346,7 @@ fn main() {
         // if argument after list is --categories
         if args.len() > 2 && (args[2] == arg_categories || args[2] == arg_no_category) {
             // Print events with no categories
-            if (args[2] == arg_no_category) {
+            if args[2] == arg_no_category {
                 for e in events_vector.iter() {
                     if e.category == "" {
                         print_day_format(&e);
@@ -357,7 +363,7 @@ fn main() {
                 // Separate the categories into a vector
                 let arg_categories: Vec<String> = separate_args_to_vector(&args[3]);
                 // Check if user gave --exclude argument
-                let exclude: bool = (args.len() > 4 && args[4] == arg_exclude);
+                let exclude: bool = args.len() > 4 && args[4] == arg_exclude;
 
                 for event in events_vector.iter() {
                     if exclude {
@@ -378,8 +384,6 @@ fn main() {
 
     // Arguments starting with add
     if args.len() > 1 && args[1] == arg_add {
-        let mut date_given: bool = true;
-
         if args.len() < 3 {
             eprintln!("No date given");
             process::exit(1);
@@ -389,7 +393,6 @@ fn main() {
 
         if args[2] != arg_date {
             date = Ok(now);
-            date_given = false;
         }
 
         if date.is_err() {
@@ -412,12 +415,19 @@ fn main() {
         match OpenOptions::new().append(true).open(&events_path) {
             Ok(file) => {
                 let mut writer = BufWriter::new(file);
-                writeln!(writer, "{}", event_formatted);
-                println!(
-                    "Successfully added event {}: {} ({})",
-                    event.date, event.description, event.category
-                );
-                counter += 1;
+
+                match writeln!(writer, "{}", event_formatted) {
+                    Ok(_) => {
+                        println!(
+                            "Successfully added event {}: {} ({})",
+                            event.date, event.description, event.category
+                        );
+                        counter += 1;
+                    }
+                    Err(e) => {
+                        eprintln!("Error writing to file: {}", e);
+                    }
+                }
             }
             Err(e) => {
                 eprintln!("Error opening file: {}", e);
@@ -436,7 +446,7 @@ fn main() {
 
         // If --description is given as first argument after delete
         if args[2] == arg_description || args[2] == arg_category {
-            let is_description: bool = (args[2] == arg_description);
+            let is_description: bool = args[2] == arg_description;
 
             for event in events_vector.iter() {
                 // Check if the given arguments matches, if user gave --description
@@ -469,8 +479,8 @@ fn main() {
                 process::exit(1);
             }
 
-            let has_category: bool = (args.len() > 5 && args[4] == arg_category);
-            let has_description: bool = (args.len() > 6 && args[4] == arg_description);
+            let has_category: bool = args.len() > 5 && args[4] == arg_category;
+            let has_description: bool = args.len() > 6 && args[4] == arg_description;
 
             if has_category {
                 for i in 2..args.len() {
@@ -565,7 +575,7 @@ fn main() {
             }
             counter += 1;
         }
-        let arg_between = "--between";
+
         if args[2] == arg_between {
             if args.len() != 5 && args.len() != 6 {
                 eprintln!("No dates given or wrong formatting.\n");
