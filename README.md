@@ -19,7 +19,7 @@ Please read the readme from there to know how to use the program!
 
 ### On Windows:
 
-- Build the program with ```cargo build```
+- Build the program with ```cargo build --release```
 
 - Run the program, the ```days_rs.exe``` is located in ```target/release``` folder. For example ```.\days_rs.exe list```  will list all the events.
 
