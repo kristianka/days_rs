@@ -15,13 +15,13 @@ Please read the readme from there to know how to use the program!
 
 - Build the program with ```cargo build --release```
 
-- Run the program, the ```days_rs``` is located in ```target/release``` folder. For example ```./days_rs list```  will list all the events.
+- Run the program, the ```days_rs``` is located in ```target/release``` folder. For example on Ubuntu ```./days_rs list```  will list all the events.
 
 ### On Windows:
 
 - Build the program with ```cargo build --release```
 
-- Run the program, the ```days_rs.exe``` is located in ```target/release``` folder. For example ```.\days_rs.exe list```  will list all the events.
+- Run the program, the ```days_rs.exe``` is located in ```target/release``` folder. For example on PowerShell ```.\days_rs.exe list```  will list all the events.
 
 ---
 
