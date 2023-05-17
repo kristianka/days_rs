@@ -29,6 +29,7 @@ Please read the readme from there to know how to use the program!
 
 ```
 date,category,description
+date,category,description
 1985-12-31,computing,C++ released
 2010-01-01,sport,Go
 2014-11-12,computing,.NET Core released
@@ -46,4 +47,5 @@ date,category,description
 2030-01-01,,No category
 2030-01-01,,No category
 2038-01-19,computing,Unix clock rolls over
+2023-05-15,school,Days_rs finished
 ```
