@@ -384,8 +384,8 @@ fn main() {
 
     // Arguments starting with add
     if args.len() > 1 && args[1] == arg_add {
-        if args.len() < 3 {
-            eprintln!("No date given");
+        if args.len() < 4 {
+            eprintln!("No date given or too few arguments");
             process::exit(1);
         }
 
@@ -408,7 +408,6 @@ fn main() {
                 description = &args[i + 1];
             }
         }
-
         let event = Event::new(date.unwrap(), category.to_string(), description.to_string());
         let event_formatted = csv_format_to_event(&event);
 
@@ -438,7 +437,7 @@ fn main() {
     // Arguments starting with delete
     if args.len() > 1 && args[1] == arg_delete {
         if args.len() < 3 {
-            eprintln!("No date or enough arguments given.\n");
+            eprintln!("No date or no enough arguments given.\n");
             process::exit(1);
         }
 
